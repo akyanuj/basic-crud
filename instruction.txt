@@ -1,0 +1,176 @@
+
+Phase 1 - Make the server run
+./gradlew bootRun
+
+
+The controller is where HTTP requests enter the application. -
+/controller
+
+
+application.properties -> manifest of spring world
+
+@GetMapping(/hello) -> is like add endpoint to this url - add http mappers
+@RestController -> entry point of boot application - is the mainactivity of spring world
+
+return mapOf<String, String>("message" to "Hello Spring")
+Map-> Jackson ->JSON -> HTTP Response
+You didn’t write: JSONObject(...) toJson(...) serialize(...)
+
+
+GET @GetMapping
+POST @PostMapping
+PUT @PutMapping
+DELETE @DeleteMapping
+PATCH @PatchMapping
+
+class User(private val password: String) {
+    fun validate(input: String): Boolean {
+        return password == input
+    }
+}
+user.validate("1234") cannot see the password. This is called encapsulation.
+
+Here’s a Spring Boot rule of thumb
+DTOs(A Data Transfer Object ) - Mostly public properties. Because their purpose is to transport data.
+Dtos are to transfer data between application layers,
+primarily between the REST Controller and the Service Layer
+
+Rule of thumb
+When you’re unsure, ask:
+Is this object’s purpose to transport data, or to perform behavior?
+Transport Data
+data class UserResponse(...)
+data class LoginRequest(...)
+data class LoginResponse(...)
+Usually: public val
+
+Perform Behavior
+class UserService(...)
+class JwtService(...)
+class PasswordValidator(...)
+Usually: private val
+
+DTO - public || Service - private
+
+
+flow from endpoint to service
+POST /auth/register -> AuthController.register() -> authService.register(request) -> AuthService.register()
+
+we never created object of service - that is handled internally by di -> it has spring ioc container just like hilt container
+Bean = An object managed by Spring - @Service
+                                     class AuthService -> AuthService is a instance of bean
+
+Then why do we need @Bean? - Because sometimes you don’t own the class.
+@Configuration
+class AppConfig {
+    @Bean - Spring sees and creates object because its a library class and cannot be created by you
+    fun passwordEncoder(): BCryptPasswordEncoder { //BCryptPasswordEncoder Bean
+        return BCryptPasswordEncoder()
+    }
+}
+
+PostgreSQL => similar to sqlite - actual database
+Datasource => Database Connection
+Host, Port, Username, Password,Database, Name to connect
+
+Repository
+interface UserRepository => daos userDao => SELECT * FROM users
+
+Entity => similar to android entity
+@Entity
+class UserEntity
+
+JPA Java Persistence API => Its is a rulebook/ guidelines that says each toy should have label, how toys should be put to chest, how you should take toy out
+Spring Data JPA uses Hibernate under the hood. -
+
+Hibernate => Magic engine that converts UserEntity into INSERT INTO users...
+we dont call hibernate directly
+Hibernate is the "Robot Helper" 🤖
+Hibernate is the actual, hard-working robot helper. It reads the JPA rulebook and does all the heavy lifting for you.
+
+hibernate converts entity into tables automatically
+
+jpa says This is how ORM should behave.
+JPA ≈ Interface
+Hibernate ≈ Implementation
+
+PostgreSQL
+    ↓
+Actual Database
+Datasource
+    ↓
+Connection to Database
+
+Entity
+    ↓
+Table Mapping
+
+Repository
+    ↓
+DAO
+
+Hibernate
+    ↓
+ORM Engine
+
+JPA
+    ↓
+ORM Contract
+
+brew services start postgresql@18
+psql postgres ->  to enter into postgress sql via terminal
+\l -> list out database
+\c -> connect to db eg \c basic_crud
+\dt -> display tables
+\d -> describe eg \d users -> id
+                              email
+                              password
+                              created_at
+
+postgres=# \c basic_crud  You are now connected to database "basic_crud" as user "akycfc".
+
+src/main/resources/application.properties
+spring.application.name=basic_crud
+server.port=8083
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/basic_crud
+spring.datasource.username=akycfc
+spring.datasource.password=
+
+spring.jpa.hibernate.ddl-auto=update -important
+spring.jpa.show-sql=true
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/basic_crud
+jdbc -> Java Database Connectivity
+postgresql-> Database Type
+localhost -> Database Server Address
+5432 -> PostgreSQL Default Port
+basic_crud -> Database Name
+
+spring.jpa.hibernate.ddl-auto=update => If I create an Entity,create/update the table automatically.
+spring.jpa.show-sql=true => This prints generated SQL.
+insert into users ...
+select * from users ...z
+
+
+when you created UserEntity - hibernate automatically create table of user - this is what hibernate does, we did not create table query anywhere
+
+Repository
+interfaces for sql
+interface UserRepository : JpaRepository<UserEntity, Long>
+UserEntity - Which table/entity does this repository manage?
+Long - What is the type of the Primary Key?
+Because Spring now generates methods automatically.
+userRepository.save(...)
+userRepository.findAll()
+userRepository.findById(...)
+userRepository.deleteById(...)
+
+findByEmail()
+existsByEmail()
+deleteByEmail()
+findAllByStatus()
+
+Controller  → HTTP concerns
+Service     → Business rules
+Repository  → Data access
