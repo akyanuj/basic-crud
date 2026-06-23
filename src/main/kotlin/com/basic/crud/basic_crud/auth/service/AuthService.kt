@@ -3,6 +3,7 @@ package com.basic.crud.basic_crud.auth.service
 import com.basic.crud.basic_crud.auth.dto.RegisterRequest
 import com.basic.crud.basic_crud.auth.dto.UpdatePasswordRequest
 import com.basic.crud.basic_crud.auth.entity.UserEntity
+import com.basic.crud.basic_crud.auth.exception.UserNotFoundException
 import com.basic.crud.basic_crud.auth.repository.UserRepository
 import org.springframework.stereotype.Service
 
@@ -44,5 +45,11 @@ class AuthService(
         )
         userRepository.save(updatedUser)
         return "Password updated"
+    }
+
+    fun deleteUser(email: String): String {
+        val savedUser = userRepository.findByEmail(email) ?: throw UserNotFoundException("Email doesn't exist")
+        userRepository.delete(savedUser)
+        return "User deleted Successfully"
     }
 }

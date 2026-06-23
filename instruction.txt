@@ -174,3 +174,63 @@ findAllByStatus()
 Controller  → HTTP concerns
 Service     → Business rules
 Repository  → Data access
+
+Throwable
+ ├── Error
+ └── Exception
+       ├── RuntimeException
+       │     ├── NullPointerException
+       │     ├── IllegalArgumentException
+       │     └── UserNotFoundException
+       │
+       └── IOException
+             SQLException
+             ParseException
+
+ Checked Exception (Exception)
+ public void getUser() throws Exception {
+     throw new Exception("User not found");
+ }
+ Now anybody calling it must do:
+ try {
+     getUser();
+ } catch (Exception e) {
+     ...
+ }
+ Java compiler forces you. These are called:Checked Exceptions
+
+ RuntimeException
+ public void getUser() {
+     throw new RuntimeException("User not found");
+ } Caller can simply do:
+ getUser();  No try/catch required. | No throws required. | Compiler doesn’t complain.
+ These are called: Unchecked Exceptions
+
+ Why Spring prefers RuntimeException
+ fun deleteUser(email: String): String {
+     val user = userRepository.findByEmail(email)
+         ?: throw UserNotFoundException("Email doesn't exist")
+
+     userRepository.delete(user)
+
+     return "Deleted"
+ }
+ If UserNotFoundException extended Exception, suddenly:
+ fun deleteUser(...) would need: @Throws(UserNotFoundException::class) or callers would need try/catch.
+
+ A Good Rule of Thumb Checked Exceptions Use when: Caller can reasonably recover.
+ IOException
+ ParseException
+ FileNotFoundException
+
+ Runtime Exceptions Use when: The request cannot continue normally.
+ UserNotFoundException
+ InvalidPasswordException
+ UnauthorizedException
+ What would the service do?  User not found. There’s no recovery inside the service. 404 Not Found
+
+
+ validation
+ @NotBlank @Email @Size @Min @Max @Pattern
+    Request ->Jackson ->RegisterRequest ->Validation ->❌ Failed ->Exception ->Global Exception Handler ->400 Bad Request
+ This is why I called it pre-validation.
