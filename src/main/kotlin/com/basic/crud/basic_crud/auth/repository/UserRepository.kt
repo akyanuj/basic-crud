@@ -11,6 +11,6 @@ interface UserRepository : JpaRepository<UserEntity, Long> {
 
     fun findByEmail(email: String): UserEntity?
 
-    fun deleteByEmail(email: String)
+    //fun deleteByEmail(email: String)
 
 }

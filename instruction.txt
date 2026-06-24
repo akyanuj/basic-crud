@@ -234,3 +234,20 @@ Throwable
  @NotBlank @Email @Size @Min @Max @Pattern
     Request ->Jackson ->RegisterRequest ->Validation ->❌ Failed ->Exception ->Global Exception Handler ->400 Bad Request
  This is why I called it pre-validation.
+
+ Bcrypt - a hashing security lib used to hash the password
+ why Bcrypt - say suppose user a and b has same password abc123 -> then if used without bcrypt, password = has1
+ if used bcrypt -> then user a pass = hashA:: user b pass = hashB even though same password abc123
+
+ flow to store pass using bcrypt
+ Plain Password->BCrypt->Hash (contains salt + cost factor)->Store in DB
+  flow to get pass using bcrypt
+ Login Password->matches()->true / false
+
+
+ @Valid - service near request body
+@field:NotBlank - validate individual field
+@field:Email - validate individual field
+
+
+Jwt -> 
