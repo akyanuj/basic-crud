@@ -11,4 +11,12 @@ class UserEntity(
     val id: Long? = null,
     val email: String = "",
     val password: String = "",
+
+    @Enumerated(EnumType.STRING)
+    val role: Role = Role.USER
 )
+
+enum class Role {
+    USER,
+    ADMIN
+}

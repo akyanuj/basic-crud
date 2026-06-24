@@ -2,13 +2,16 @@ package com.basic.crud.basic_crud.auth.controller
 
 import com.basic.crud.basic_crud.auth.dto.ApiResponse
 import com.basic.crud.basic_crud.auth.dto.LoginRequest
+import com.basic.crud.basic_crud.auth.dto.LoginResponse
 import com.basic.crud.basic_crud.auth.dto.RegisterRequest
 import com.basic.crud.basic_crud.auth.dto.UpdatePasswordRequest
 import com.basic.crud.basic_crud.auth.dto.UserResponse
+import com.basic.crud.basic_crud.auth.security.CustomUserDetails
 import com.basic.crud.basic_crud.auth.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 
@@ -61,11 +64,21 @@ class AuthController(
     }
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody loginRequest: LoginRequest) : ResponseEntity<ApiResponse> {
+    fun login(@Valid @RequestBody loginRequest: LoginRequest) : ResponseEntity<LoginResponse> {
         println(loginRequest)
-        val result =authService.login(loginRequest)
+        val token = authService.login(loginRequest)
         return ResponseEntity.ok(
-            ApiResponse(message = result)
+            LoginResponse(token = token)
+        )
+    }
+
+    @GetMapping("/me")
+    fun getCurrentUser(
+        @AuthenticationPrincipal
+        principal: CustomUserDetails
+    ): UserResponse {
+        return authService.getCurrentUser(
+            principal.user.id!!
         )
     }
 }

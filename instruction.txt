@@ -250,4 +250,148 @@ Throwable
 @field:Email - validate individual field
 
 
-Jwt -> 
+Jwt -> Json web token = dont store passsword, otps secrets etc
+Header | payload | signature
+Header -> info such as type of algo, type {"alg": "hs256" , "type":"jwt"}
+Payload -> {"sub":"123", "email" : "afff", "exp":1223244 }
+Signature -> jwt generates using header+payload+secret key
+
+ flow -> login -> generate jwt -> return jwt {"token" : "eyJWENJdnjkd34nendkdkn.eihiuheinenneede.jnjn3e3222DNDJN"} -> AuthService -> JwtService
+ Fututre api -> receive jwt -> verify jwt -> identify user
+ AuthService asks: jwtService.generateToken(     JwtService returns:eyJhbGciOiJIUzI1NiJ9...
+                       userId = 18,
+                       role = "USER"
+                   )
+
+We need a secret. For learning, add to:application.properties
+jwt.secret=my-super-secret-key-for-learning-only
+
+Login flow will become: POST /auth/login -> Find User -> Verify Password ->Generate JWT ->Return JWT
+Why not use data class for JPA entities?
+Because JPA entities have identity and lifecycle.
+
+Data classes generate equals(), hashCode(), toString()
+based on fields, which can cause issues with:
+
+- Entity identity
+- Lazy loading proxies
+- Bidirectional relationships
+- Performance
+
+
+JWT Filter runs BEFORE controller.
+Request->JwtAuthenticationFilter->Controller
+
+JWT not required for below public apis          Protected
+Login                                           Get Profile
+Register                                        Update Profile
+Forgot Password                                 Create Memory
+Health Check                                    Delete Memory
+
+JwtAuthenticationFilter -> Android interceptor
+what does Jwtfilter do
+1. Read Authorization Header
+2. Extract Token
+3. Validate Token
+4. Extract UserId
+5. Load User
+6. Tell Spring:
+   "User is authenticated"
+
+
+   UserEntity
+       ↓
+   Database Model
+
+   CustomUserDetails
+       ↓
+   Security Model
+
+   CustomUserDetailsService
+       ↓
+   Load Users
+
+   JwtService
+       ↓
+   JWT Operations
+
+What A Typical Small Production App Has
+   security
+   ├── JwtService
+   ├── JwtAuthenticationFilter
+   ├── CustomUserDetails
+   ├── CustomUserDetailsService
+   └── SecurityConfig
+
+   Whenever I implement JWT filter I ask:z
+   1. Is Header Present?
+   2. Is Token Valid?
+   3. Who Is User?
+   4. Load User
+   5. Set Authentication
+   6. Continue Chain
+
+   @AuthenticationPrincipal -> gives us current logged in user
+   Without @AuthenticationPrincipal you would write:
+   val authentication =
+       SecurityContextHolder
+           .getContext()
+           .authentication
+
+   val principal =
+       authentication.principal
+           as CustomUserDetails
+
+✅ API Flow
+Request
+→ Controller
+→ Service
+→ Repository
+→ Database
+
+ Login Flow
+ Email + Password
+ → Verify Password
+ → Generate JWT
+ → Return Token
+
+✅ Spring Security Flow
+JWT
+→ JwtAuthenticationFilter
+→ SecurityContext
+→ @AuthenticationPrincipal
+→ Controller
+
+✅ JPA Flow
+Controller
+→ Service
+→ Repository
+→ Hibernate
+→ PostgreSQL
+
+
+
+Problem:→ @AuthenticationPrincipal
+How does backend identify the logged-in user?
+
+Flow:
+Request
+→ JWT Filter
+→ Extract UserId
+→ Load UserDetails
+→ SecurityContext
+→ @AuthenticationPrincipal
+→ Controller
+
+Key Learning:
+JWT identifies the user.
+SecurityContext stores the authenticated user for the request.
+Controller can access the current user without query params.
+
+Tradeoffs:
+Pros:
+No need to send email/userId.
+Centralized authentication.
+
+Cons:
+Extra DB lookup in filter.

@@ -10,6 +10,7 @@ import com.basic.crud.basic_crud.auth.exception.EmailNotFoundException
 import com.basic.crud.basic_crud.auth.exception.InvalidCredentialsException
 import com.basic.crud.basic_crud.auth.exception.UserNotFoundException
 import com.basic.crud.basic_crud.auth.repository.UserRepository
+import com.basic.crud.basic_crud.auth.security.JwtService
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val jwtService: JwtService,
 ) {
     fun register(
         request: RegisterRequest,
@@ -34,12 +36,12 @@ class AuthService(
             password = encodedPassword
         )
         val savedUser = userRepository.save(user)
-        return UserResponse(savedUser.id!!, savedUser.email)
+        return UserResponse(savedUser.id!!, savedUser.email, savedUser.role)
     }
 
     fun getUser(email: String): UserResponse {
         val savedUser = userRepository.findByEmail(email) ?: throw UserNotFoundException("User not found")
-        return UserResponse(savedUser.id!!, savedUser.email)
+        return UserResponse(savedUser.id!!, savedUser.email, savedUser.role)
     }
 
     fun updatePassword(updatePasswordRequest: UpdatePasswordRequest): String {
@@ -68,6 +70,24 @@ class AuthService(
         if (!isLoggedIn) {
             throw InvalidCredentialsException("Invalid credentials")
         }
-        return "Login successful"
+        val token = jwtService.generateToken(savedUser)
+        println("Extracted User Id = ${jwtService.extractUserId(token)}")
+        println("Token Valid = ${jwtService.isTokenValid(token)}")
+        return token
+    }
+
+    fun getCurrentUser(
+        userId: Long
+    ): UserResponse{
+        val user = userRepository.findById(userId)
+            .orElseThrow {
+                UserNotFoundException("User not found")
+            }
+
+        return UserResponse(
+            id = user.id!!,
+            email = user.email,
+            role = user.role
+        )
     }
 }
